@@ -23,7 +23,7 @@ function Dashboard() {
             {/* Top info small card */}
             <div className="  p-4 flex flex-wrap items-center justify-between gap-2 sm:gap-4">
               <div className="text-xs sm:text-sm text-gray-500">
-                {user.full_name}
+                {user.fullname}
                 <br></br>
                 {user.phone}
               </div>
@@ -55,19 +55,21 @@ function Dashboard() {
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2">
-                  <button
-                    className={`text-xs px-3 py-1 rounded-full border border-gray-400 bg-white `}
-                    onClick={() =>
-                      setState({ ...state, selectedBar: "deposit" })
-                    }
-                    style={
-                      state.selectedBar === "deposit"
-                        ? { backgroundColor: "#000", color: "white" }
-                        : { backgroundColor: "white", color: "black" }
-                    }
-                  >
-                    Deposit
-                  </button>
+                  <Link to="/deposit">
+                    <button
+                      className={`text-xs px-3 py-1 rounded-full border border-gray-400 bg-white `}
+                      onClick={() =>
+                        setState({ ...state, selectedBar: "deposit" })
+                      }
+                      style={
+                        state.selectedBar === "deposit"
+                          ? { backgroundColor: "#000", color: "white" }
+                          : { backgroundColor: "white", color: "black" }
+                      }
+                    >
+                      Deposit
+                    </button>
+                  </Link>
                   <Link to="/convert">
                     <button
                       className="text-xs px-3 py-1 rounded-full border border-gray-400 bg-white"

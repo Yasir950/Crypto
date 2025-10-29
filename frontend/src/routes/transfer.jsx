@@ -1,12 +1,85 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { getData, getDataById, saveData } from "../apiservice";
+import { toast } from "react-toastify";
 
 const TransferComp = () => {
   const [asset, setAsset] = useState("USDT");
-  const [from, setFrom] = useState("Funding");
-  const [to, setTo] = useState("Trading");
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
   const [amount, setAmount] = useState("");
-  const [available, setAvailable] = useState(1500.25); // example balance
+  const [available, setAvailable] = useState(0);
   const [history, setHistory] = useState([]);
+  const [accounts, setAccounts] = useState([]);
+  const [balances, setBalances] = useState([]);
+  const user = JSON.parse(localStorage.getItem("user"));
+  useEffect(() => {
+    if (!from || !asset || balances.length === 0) {
+      setAvailable(0);
+      return;
+    }
+    const matchedBalance = balances.find(
+      (b) =>
+        b.account_id === Number(from) &&
+        b.coin === asset &&
+        b.user_id === user.id
+    );
+    console.log(matchedBalance);
+    setAvailable(matchedBalance ? Number(matchedBalance.balance) : 0);
+  }, [from, asset, balances]);
+  useEffect(() => {
+    getAccounts();
+    getTransferHistory();
+    console.log(user);
+
+    return () => {};
+  }, []);
+  const getTransferHistory = async () => {
+    let res = await getDataById("transfer", user.id);
+    if (res.success) {
+      setHistory(res.history);
+    }
+  };
+  const getAccounts = async () => {
+    const res = await getData("accounts");
+    const balanceRes = await getData("account_balance");
+    const userId = user.id;
+
+    if (res.success && Array.isArray(res.accounts)) {
+      setAccounts(res.accounts);
+      if (res.accounts.length >= 2) {
+        setFrom(res.accounts[0].id);
+        setTo(res.accounts[1].id);
+      } else if (res.accounts.length === 1) {
+        setFrom(res.accounts[0].id);
+      }
+    }
+
+    // ✅ Filter balances only for logged-in user
+    if (balanceRes.success && Array.isArray(balanceRes.account_balance)) {
+      const userBalances = balanceRes.account_balance.filter(
+        (b) => b.user_id === userId
+      );
+      setBalances(userBalances);
+    }
+  };
+
+  // Update available balance whenever "From" or "Asset" changes
+  useEffect(() => {
+    if (!from || !asset || balances.length === 0) {
+      setAvailable(0);
+      return;
+    }
+
+    const matchedBalance = balances.find(
+      (b) => b.account_id === Number(from) && b.coin === asset
+    );
+
+    if (matchedBalance) {
+      setAvailable(Number(matchedBalance.balance));
+    } else {
+      setAvailable(0);
+    }
+  }, [from, asset, balances]);
 
   const handleSwap = () => {
     setFrom(to);
@@ -16,22 +89,33 @@ const TransferComp = () => {
   const handleMax = () => {
     setAmount(available);
   };
+  const getAccontById = (id) => {
+    const found = accounts.find((item) => item.id === id);
+    if (found?.id) {
+      return found.account_name;
+    }
+  };
+  const handleTransfer = async () => {
+    if (!amount || Number(amount) <= 0) {
+      return toast("Please enter a valid amount");
+    }
 
-  const handleTransfer = () => {
-    if (!amount || amount <= 0) return alert("Enter valid amount");
-
-    const newTransfer = {
-      crypto: asset,
+    if (Number(amount) > Number(available)) {
+      return toast("Insufficient balance");
+    }
+    const data = {
+      user_id: user.id,
+      fromAccountId: from,
+      toAccountId: to,
+      coin: asset,
       amount,
-      from,
-      to,
-      date: new Date().toLocaleString(),
-      status: "Completed",
     };
-
-    setHistory([newTransfer, ...history]);
-    setAvailable((prev) => prev - amount);
-    setAmount("");
+    let res = await saveData(data, "transfer");
+    if (res.success) {
+      getTransferHistory();
+      setAvailable((prev) => prev - amount);
+      setAmount("");
+    }
   };
 
   return (
@@ -56,9 +140,18 @@ const TransferComp = () => {
       <div className="flex flex-col sm:flex-row items-center gap-6 mb-8">
         <div className="flex-1 max-w-xs">
           <label className="block text-sm text-gray-700 mb-1">From</label>
-          <div className="border border-[#E5E5E5] bg-[#E5E5E5] rounded-xl px-3 py-2 text-gray-700 text-sm bg-gray-50">
-            {from}
-          </div>
+          <select
+            value={from}
+            onChange={(e) => setFrom(e.target.value)}
+            className="w-full border border-[#E5E5E5] bg-[#E5E5E5] rounded-xl px-3 py-2 text-gray-700 text-sm bg-gray-50"
+          >
+            <option value="">Select Account</option>
+            {accounts.map((acc) => (
+              <option key={acc.id} value={acc.id}>
+                {acc.account_name}
+              </option>
+            ))}
+          </select>
         </div>
 
         <button
@@ -70,9 +163,18 @@ const TransferComp = () => {
 
         <div className="flex-1 max-w-xs">
           <label className="block text-sm text-gray-700 mb-1">To</label>
-          <div className="border border-[#E5E5E5] bg-[#E5E5E5] rounded-xl px-3 py-2 text-gray-700 text-sm bg-gray-50">
-            {to}
-          </div>
+          <select
+            value={to}
+            onChange={(e) => setTo(e.target.value)}
+            className="w-full border border-[#E5E5E5] bg-[#E5E5E5] rounded-xl px-3 py-2 text-gray-700 text-sm bg-gray-50"
+          >
+            <option value="">Select Account</option>
+            {accounts.map((acc) => (
+              <option key={acc.id} value={acc.id}>
+                {acc.account_name}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
 
@@ -113,10 +215,7 @@ const TransferComp = () => {
       </div>
 
       {/* Tabs */}
-      <div className="border-b flex text-sm text-gray-700 mb-4">
-        <button className="px-4 py-2 border-b-2 border-gray-800 font-medium">
-          {asset} Transfers
-        </button>
+      <div className="border-b flex  font-semibold text-3xl mb-8">
         <button className="px-4 py-2 border-b-2 border-transparent hover:border-gray-300">
           Transfer history
         </button>
@@ -127,38 +226,32 @@ const TransferComp = () => {
         <table className="w-full text-left text-sm text-gray-700 border-collapse">
           <thead>
             <tr className="border-b border-gray-200">
+              <th className="py-2 px-4 font-medium">Date</th>
               <th className="py-2 px-4 font-medium">Crypto</th>
               <th className="py-2 px-4 font-medium">Amount</th>
               <th className="py-2 px-4 font-medium">From</th>
               <th className="py-2 px-4 font-medium">To</th>
-              <th className="py-2 px-4 font-medium">Date</th>
               <th className="py-2 px-4 font-medium">Status</th>
             </tr>
           </thead>
           <tbody>
-            {history.length > 0
-              ? history.map((item, i) => (
-                  <tr key={i} className="border-b border-gray-100">
-                    <td className="py-3 px-4">{item.crypto}</td>
-                    <td className="py-3 px-4">{item.amount}</td>
-                    <td className="py-3 px-4">{item.from}</td>
-                    <td className="py-3 px-4">{item.to}</td>
-                    <td className="py-3 px-4">{item.date}</td>
-                    <td className="py-3 px-4">{item.status}</td>
-                  </tr>
-                ))
-              : Array(6)
-                  .fill("-")
-                  .map((_, i) => (
-                    <tr key={i} className="border-b border-gray-100">
-                      <td className="py-3 px-4">-</td>
-                      <td className="py-3 px-4">-</td>
-                      <td className="py-3 px-4">-</td>
-                      <td className="py-3 px-4">-</td>
-                      <td className="py-3 px-4">-</td>
-                      <td className="py-3 px-4">-</td>
-                    </tr>
-                  ))}
+            {history.length > 0 &&
+              history.map((item, i) => (
+                <tr key={i} className="border-b border-gray-100">
+                  <td className="py-3 px-4">
+                    {new Date(item.created_at).toLocaleString()}
+                  </td>
+                  <td className="py-3 px-4">{item.coin}</td>
+                  <td className="py-3 px-4">{item.amount}</td>
+                  <td className="py-3 px-4">
+                    {getAccontById(item?.from_account)}
+                  </td>
+                  <td className="py-3 px-4">
+                    {getAccontById(item.to_account)}
+                  </td>
+                  <td className="py-3 px-4">{item.status}</td>
+                </tr>
+              ))}
           </tbody>
         </table>
       </div>

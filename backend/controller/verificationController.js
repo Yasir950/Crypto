@@ -29,10 +29,10 @@ export const saveVerificationForm = async (req, res) => {
     // ✅ Construct file URLs
     const baseUrl = `${req.protocol}://${req.get("host")}`;
     const image_fs = req.files?.image_fs
-      ? `${baseUrl}/assets/${req.files.image_fs[0].filename}`
+      ? `${baseUrl}/assets/verification/${req.files.image_fs[0].filename}`
       : null;
     const image_bs = req.files?.image_bs
-      ? `${baseUrl}/assets/${req.files.image_bs[0].filename}`
+      ? `${baseUrl}/assets/verification/${req.files.image_bs[0].filename}`
       : null;
 
     const insertQuery = `

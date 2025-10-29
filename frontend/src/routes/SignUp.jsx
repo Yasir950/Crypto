@@ -3,34 +3,43 @@ import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
 import { Link, useNavigate } from "react-router-dom";
 import CryptoSection from "../components/cryptoSection";
-import { saveUser } from "../apiservice";
+import { saveData } from "../apiservice";
 
 const SignupSection = () => {
   const navigate = useNavigate();
   const [state, setState] = React.useState({
     agreed: false,
   });
+
   const handleAgree = () => {
     setState((prevState) => ({ ...prevState, agreed: !prevState.agreed }));
   };
+
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm();
 
+  // ✅ Get all available timezones (from Intl API)
+  const timezones = React.useMemo(() => Intl.supportedValuesOf("timeZone"), []);
+
+  // ✅ Default timezone based on user's system
+  const defaultTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
   // ✅ Submit handler
   const onSubmit = async (data) => {
-    if (state.agreed) {
-      const res = await saveUser(data);
-      if (res) {
-        toast.success(res.message);
-        localStorage.setItem("user", JSON.stringify(res.user));
-        localStorage.setItem("token", res.token);
-        navigate("/signin", { replace: true });
-      }
-    } else {
+    if (!state.agreed) {
       toast.error("You must agree to the Terms and Conditions");
+      return;
+    }
+
+    const res = await saveData(data, "users");
+    if (res) {
+      toast.success(res.message);
+      localStorage.setItem("user", JSON.stringify(res.user));
+      localStorage.setItem("token", res.token);
+      navigate("/signin", { replace: true });
     }
   };
 
@@ -50,27 +59,31 @@ const SignupSection = () => {
           Create an account
         </h2>
 
+        {/* Username */}
         <div className="flex items-center bg-gray-100 p-2 rounded-md">
           <input
-            {...register("user_name", { required: "Username is required" })}
+            {...register("username", { required: "Username is required" })}
             placeholder="Username"
             className="bg-transparent outline-none text-sm w-full placeholder-[#154470] text-[#154470]"
           />
         </div>
-        {errors.user_name && (
-          <p className="text-red-500 text-xs">{errors.user_name.message}</p>
+        {errors.username && (
+          <p className="text-red-500 text-xs">{errors.username.message}</p>
         )}
 
+        {/* Full Name */}
         <div className="flex items-center bg-gray-100 p-2 rounded-md">
           <input
-            {...register("full_name", { required: "Full name is required" })}
+            {...register("fullname", { required: "Full name is required" })}
             placeholder="Your Full Name"
             className="bg-transparent outline-none text-sm w-full placeholder-[#154470] text-[#154470]"
           />
         </div>
-        {errors.full_name && (
-          <p className="text-red-500 text-xs">{errors.full_name.message}</p>
+        {errors.fullname && (
+          <p className="text-red-500 text-xs">{errors.fullname.message}</p>
         )}
+
+        {/* Email */}
         <div className="flex items-center bg-gray-100 p-2 rounded-md">
           <input
             {...register("email", {
@@ -85,6 +98,8 @@ const SignupSection = () => {
         {errors.email && (
           <p className="text-red-500 text-xs">{errors.email.message}</p>
         )}
+
+        {/* Country */}
         <div className="flex items-center bg-gray-100 p-2 rounded-md">
           <select
             {...register("country")}
@@ -102,6 +117,7 @@ const SignupSection = () => {
           </select>
         </div>
 
+        {/* Currency */}
         <div className="flex items-center bg-gray-100 p-2 rounded-md">
           <select
             {...register("currency")}
@@ -119,6 +135,25 @@ const SignupSection = () => {
           </select>
         </div>
 
+        {/* ✅ Timezone Dropdown */}
+        <div className="flex items-center bg-gray-100 p-2 rounded-md">
+          <select
+            {...register("timezone", { required: "Timezone is required" })}
+            defaultValue={defaultTimezone}
+            className="bg-transparent outline-none text-sm w-full text-[#154470]"
+          >
+            {timezones.map((tz) => (
+              <option key={tz} value={tz}>
+                {tz}
+              </option>
+            ))}
+          </select>
+        </div>
+        {errors.timezone && (
+          <p className="text-red-500 text-xs">{errors.timezone.message}</p>
+        )}
+
+        {/* Phone */}
         <div className="flex items-center bg-gray-100 p-2 rounded-md">
           <input
             {...register("phone")}
@@ -127,6 +162,7 @@ const SignupSection = () => {
           />
         </div>
 
+        {/* Password */}
         <div className="flex items-center bg-gray-100 p-2 rounded-md">
           <input
             {...register("password", { required: "Password is required" })}
@@ -138,6 +174,8 @@ const SignupSection = () => {
         {errors.password && (
           <p className="text-red-500 text-xs">{errors.password.message}</p>
         )}
+
+        {/* Submit */}
         <div className="flex justify-center mt-4">
           <button
             type="submit"
@@ -148,13 +186,14 @@ const SignupSection = () => {
           </button>
         </div>
 
+        {/* Agreement */}
         <div className="flex items-center space-x-2 mt-4">
           <input
             type="checkbox"
             id="remember"
             className="cursor-pointer"
             onChange={handleAgree}
-            value={state.agreed}
+            checked={state.agreed}
           />
           <label htmlFor="remember" className="text-xs text-gray-500">
             I agree to Forex Synals{" "}

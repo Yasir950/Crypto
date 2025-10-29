@@ -26,14 +26,13 @@ export default function IDVerificationForm() {
 
   const onSubmit = async (data) => {
     const user = JSON.parse(localStorage.getItem("user"));
-    console.log(user);
     if (!state.agreed) {
       toast.error("You must agree to the Terms and Conditions");
       return;
     }
-
+    console.log(user);
     const formData = new FormData();
-    formData.append("user_id", user.user_id); // replace with logged-in user ID
+    formData.append("user_id", user.id); // replace with logged-in user ID
     formData.append("first_name", data.first_name);
     formData.append("last_name", data.last_name);
     formData.append("email", data.email);

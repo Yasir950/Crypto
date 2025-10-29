@@ -24,10 +24,9 @@ export const userLogin = async (userData) => {
 
     }
 }
-
-export const saveUser = async (userData) => {
+export const getData = async ( url) => {
     try {
-        let res = await API.post('/api/users', userData);
+        let res = await API.get(`/api/${url}`);
         let json = res.data;
         return json;
         
@@ -36,7 +35,23 @@ export const saveUser = async (userData) => {
       toast.error(error.response.data.message); // e.g. "User not found"
     } else {
       // Fallback for network or unknown errors
-      toast.error("Login failed, please try again.");
+      // toast.error("Login failed, please try again.");
+    }
+
+    }
+}
+export const saveData = async (userData, url) => {
+    try {
+        let res = await API.post(`/api/${url}`, userData);
+        let json = res.data;
+        return json;
+        
+    } catch (error) {
+       if (error.response && error.response.data && error.response.data.message) {
+      toast.error(error.response.data.message); // e.g. "User not found"
+    } else {
+      // Fallback for network or unknown errors
+      // toast.error("Login failed, please try again.");
     }
 
     }
@@ -52,7 +67,7 @@ export const updateUser = async (userData, id) => {
       toast.error(error.response.data.message); // e.g. "User not found"
     } else {
       // Fallback for network or unknown errors
-      toast.error("Login failed, please try again.");
+      // toast.error("Login failed, please try again.");
     }
 
     }
@@ -69,7 +84,39 @@ export const saveForm = async (userData) => {
       toast.error(error.response.data.message); // e.g. "User not found"
     } else {
       // Fallback for network or unknown errors
-      toast.error("Login failed, please try again.");
+      // toast.error("Login failed, please try again.");
+    }
+
+    }
+}
+export const depositAmount = async (userData) => {
+    try {
+        let res = await API.post('/api/deposit', userData);
+        let json = res.data;
+        return json;
+        
+    } catch (error) {
+       if (error.response && error.response.data && error.response.data.message) {
+      toast.error(error.response.data.message); // e.g. "User not found"
+    } else {
+      // Fallback for network or unknown errors
+      // toast.error("Login failed, please try again.");
+    }
+
+    }
+}
+export const getDataById = async (url,id) => {
+    try {
+        let res = await API.get(`/api/${url}/${id}`);
+        let json = res.data;
+        return json;
+        
+    } catch (error) {
+       if (error.response && error.response.data && error.response.data.message) {
+      toast.error(error.response.data.message); // e.g. "User not found"
+    } else {
+      // Fallback for network or unknown errors
+      // toast.error("Login failed, please try again.");
     }
 
     }

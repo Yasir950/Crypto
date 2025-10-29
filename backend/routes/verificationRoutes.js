@@ -1,6 +1,6 @@
 import express from 'express';
 import { saveVerificationForm } from '../controller/verificationController.js';
-import { upload } from '../middleware/index.js';
+import { upload } from '../middleware/verificationMulter.js';
 const router = express.Router();
 
 router.post('/submit-verification', upload.fields([

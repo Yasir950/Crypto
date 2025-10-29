@@ -20,6 +20,7 @@ import { UserProfileComp } from "./routes/profile";
 import IDVerificationForm from "./routes/verification";
 import TradeDashboard from "./components/dashboard";
 import MartketComp from "./components/crypto";
+import Deposit from "./routes/deposit";
 
 
 function App() {
@@ -43,6 +44,7 @@ function App() {
           <Route path="/signin" element={<SignIn/>}/>
           <Route path="/signup" element={<SignUp/>}/>
           <Route path="/account" element={<Account/>}/>
+          <Route path="/deposit" element={<Deposit/>}/>
           <Route path="/convert" element={<ConvertComp/>}/>
           <Route path="/withdraw" element={<WithDrawComp/>}/>
           <Route path="/transfer" element={<TransferComp/>}/>
