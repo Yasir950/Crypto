@@ -3,14 +3,21 @@ import { Link } from "react-router-dom";
 
 const Navbar2 = () => {
   const [openDropdown, setOpenDropdown] = useState(null);
-  const dropdownRef = useRef(null);
-  const user = localStorage.getItem("user");
-  // Close dropdown if clicked outside
+  const tradeRef = useRef(null);
+  const moreRef = useRef(null);
+  const profileRef = useRef(null);
+  const user = JSON.parse(localStorage.getItem("user"));
+
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setOpenDropdown(null);
+      if (
+        (tradeRef.current && tradeRef.current.contains(event.target)) ||
+        (moreRef.current && moreRef.current.contains(event.target)) ||
+        (profileRef.current && profileRef.current.contains(event.target))
+      ) {
+        return; // clicked inside dropdown
       }
+      setOpenDropdown(null); // clicked outside
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
@@ -19,23 +26,25 @@ const Navbar2 = () => {
   const toggleDropdown = (menu) => {
     setOpenDropdown(openDropdown === menu ? null : menu);
   };
+
   const logout = () => {
     localStorage.clear();
   };
+
   return (
     <nav className="bg-black text-white py-4 px-6 md:px-12 flex justify-between items-center relative">
       {/* Left Menu */}
-      <div className="flex space-x-6 text-sm font-medium" ref={dropdownRef}>
+      <div className="flex space-x-6 text-sm font-medium">
         <Link to="/">
-          <div className="cursor-pointer hover:text-gray-300">Buy Crypto </div>
+          <div className="cursor-pointer hover:text-gray-300">Buy Crypto</div>
         </Link>
 
-        <Link to="/market">
+        <Link to="/">
           <div className="cursor-pointer hover:text-gray-300">Markets</div>
         </Link>
 
         {/* Trade Dropdown */}
-        <div className="relative">
+        <div className="relative" ref={tradeRef}>
           <div
             onClick={() => toggleDropdown("trade")}
             className="cursor-pointer hover:text-gray-300"
@@ -44,32 +53,32 @@ const Navbar2 = () => {
           </div>
 
           {openDropdown === "trade" && (
-            <div className="absolute left-0 mt-2 w-40 bg-white text-black rounded-lg shadow-lg overflow-hidden z-50">
+            <div className="absolute left-0 mt-2 w-40 bg-black text-white rounded-sm overflow-hidden z-50">
               <Link
                 to="/convert"
+                className="block px-4 py-2 hover:bg-gray-100 hover:text-black"
                 onClick={() => setOpenDropdown(null)}
-                className="block px-4 py-2 hover:bg-gray-100"
               >
                 Convert
               </Link>
               <Link
                 to="/deposit"
+                className="block px-4 py-2 hover:bg-gray-100 hover:text-black"
                 onClick={() => setOpenDropdown(null)}
-                className="block px-4 py-2 hover:bg-gray-100"
               >
                 Deposit
               </Link>
               <Link
                 to="/withdraw"
+                className="block px-4 py-2 hover:bg-gray-100 hover:text-black"
                 onClick={() => setOpenDropdown(null)}
-                className="block px-4 py-2 hover:bg-gray-100"
               >
                 Withdraw
               </Link>
               <Link
                 to="/transfer"
+                className="block px-4 py-2 hover:bg-gray-100 hover:text-black"
                 onClick={() => setOpenDropdown(null)}
-                className="block px-4 py-2 hover:bg-gray-100"
               >
                 Transfer
               </Link>
@@ -78,7 +87,7 @@ const Navbar2 = () => {
         </div>
 
         {/* More Dropdown */}
-        <div className="relative">
+        <div className="relative" ref={moreRef}>
           <div
             onClick={() => toggleDropdown("more")}
             className="cursor-pointer hover:text-gray-300"
@@ -87,18 +96,18 @@ const Navbar2 = () => {
           </div>
 
           {openDropdown === "more" && (
-            <div className="absolute left-0 mt-2 w-44 bg-white text-black rounded-lg shadow-lg overflow-hidden z-50">
+            <div className="absolute left-0 mt-2 w-44 bg-black text-white rounded-sm overflow-hidden z-50">
               <Link
-                to="/id-verification"
+                to="/verification"
+                className="block px-4 py-2 hover:bg-gray-100 hover:text-black"
                 onClick={() => setOpenDropdown(null)}
-                className="block px-4 py-2 hover:bg-gray-100"
               >
                 ID Verification
               </Link>
               <Link
                 to="/support"
+                className="block px-4 py-2 hover:bg-gray-100 hover:text-black"
                 onClick={() => setOpenDropdown(null)}
-                className="block px-4 py-2 hover:bg-gray-100"
               >
                 Support
               </Link>
@@ -106,32 +115,32 @@ const Navbar2 = () => {
           )}
         </div>
       </div>
+
+      {/* Profile Dropdown */}
       {user && (
-        <div className="relative" ref={dropdownRef}>
+        <div className="relative" ref={profileRef}>
           <div
             onClick={() => toggleDropdown("profile")}
             className="cursor-pointer flex items-center gap-2 hover:opacity-80"
           >
-            <img
-              src="https://i.pravatar.cc/40" // Replace with your profile image or state-based avatar
-              alt="Profile"
-              className="w-9 h-9 rounded-full border-2 border-gray-500"
-            />
+            <div className="w-9 h-9 rounded-full border-2 border-gray-500 flex items-center justify-center bg-gray-700 text-white text-lg font-semibold">
+              {user?.fullname?.charAt(0)?.toUpperCase() || "U"}
+            </div>
           </div>
 
           {openDropdown === "profile" && (
-            <div className="absolute right-0 mt-2 w-44 bg-white text-black rounded-lg shadow-lg overflow-hidden z-50">
+            <div className="absolute right-0 mt-2 w-44 bg-black text-white rounded-sm  overflow-hidden z-50">
               <Link
                 to="/profile"
                 onClick={() => setOpenDropdown(null)}
-                className="block px-4 py-2 hover:bg-gray-100"
+                className="block px-4 py-2 hover:bg-gray-100 hover:text-black"
               >
                 Profile
               </Link>
               <Link
                 to="/"
-                onClick={() => logout()}
-                className="block px-4 py-2 hover:bg-gray-100"
+                onClick={logout}
+                className="block px-4 py-2 hover:bg-gray-100 hover:text-black"
               >
                 Logout
               </Link>

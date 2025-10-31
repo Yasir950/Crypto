@@ -5,24 +5,15 @@ export const convertCrypto = async (req, res) => {
   try {
     const {
       user_id,
-      from_account_id,
+      account_type, // same for both sides
       from_coin,
-      to_account_id,
       to_coin,
       amount,
       converted_amount,
     } = req.body;
 
     // 🧩 Validate input
-    if (
-      !user_id ||
-      !from_account_id ||
-      !from_coin ||
-      !to_account_id ||
-      !to_coin ||
-      !amount ||
-      !converted_amount
-    ) {
+    if (!user_id || !account_type || !from_coin || !to_coin || !amount || !converted_amount) {
       connection.release();
       return res
         .status(400)
@@ -41,10 +32,12 @@ export const convertCrypto = async (req, res) => {
 
     await connection.beginTransaction();
 
-    // 🔍 Fetch source balance
+    // 🔍 Fetch source balance (same account type)
     const [fromRows] = await connection.query(
-      "SELECT * FROM account_balance WHERE user_id = ? AND account_id = ? AND coin = ? FOR UPDATE",
-      [user_id, from_account_id, from_coin]
+      `SELECT * FROM account_balance 
+       WHERE user_id = ? AND account_id = ? AND coin = ? 
+       FOR UPDATE`,
+      [user_id, account_type, from_coin]
     );
 
     if (fromRows.length === 0) {
@@ -64,17 +57,21 @@ export const convertCrypto = async (req, res) => {
         .json({ success: false, message: "Insufficient balance" });
     }
 
-    // 💰 Deduct from source account
+    // 💰 Deduct from source
     const newFromBalance = fromBalance - fromAmount;
     await connection.query(
-      "UPDATE account_balance SET balance = ?, updated_at = NOW() WHERE id = ?",
+      `UPDATE account_balance 
+       SET balance = ?, updated_at = NOW() 
+       WHERE id = ?`,
       [newFromBalance, fromRows[0].id]
     );
 
-    // 🔍 Update or insert destination account
+    // 💰 Update or create destination coin in same account type
     const [toRows] = await connection.query(
-      "SELECT * FROM account_balance WHERE user_id = ? AND account_id = ? AND coin = ? FOR UPDATE",
-      [user_id, to_account_id, to_coin]
+      `SELECT * FROM account_balance 
+       WHERE user_id = ? AND account_id = ? AND coin = ? 
+       FOR UPDATE`,
+      [user_id, account_type, to_coin]
     );
 
     if (toRows.length > 0) {
@@ -82,30 +79,25 @@ export const convertCrypto = async (req, res) => {
       const newToBalance = toBalance + toAmount;
 
       await connection.query(
-        "UPDATE account_balance SET balance = ?, updated_at = NOW() WHERE id = ?",
+        `UPDATE account_balance 
+         SET balance = ?, updated_at = NOW() 
+         WHERE id = ?`,
         [newToBalance, toRows[0].id]
       );
     } else {
       await connection.query(
-        "INSERT INTO account_balance (user_id, account_id, coin, balance) VALUES (?, ?, ?, ?)",
-        [user_id, to_account_id, to_coin, toAmount]
+        `INSERT INTO account_balance (user_id, account_id, coin, balance) 
+         VALUES (?, ?, ?, ?)`,
+        [user_id, account_type, to_coin, toAmount]
       );
     }
 
     // 🧾 Record conversion history
     await connection.query(
       `INSERT INTO convert_history 
-       (user_id, from_account_id, from_coin, to_account_id, to_coin, from_amount, to_amount)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [
-        user_id,
-        from_account_id,
-        from_coin,
-        to_account_id,
-        to_coin,
-        fromAmount,
-        toAmount,
-      ]
+       (user_id, account_type, from_coin, to_coin, amount, converted_amount) 
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [user_id, account_type, from_coin, to_coin, fromAmount, toAmount]
     );
 
     await connection.commit();
@@ -113,8 +105,15 @@ export const convertCrypto = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: "Conversion saved successfully",
-      data: { from_account_id, to_account_id, from_coin, to_coin, amount, converted_amount },
+      message: "Conversion successful",
+      data: {
+        user_id,
+        account_type,
+        from_coin,
+        to_coin,
+        amount: fromAmount,
+        converted_amount: toAmount,
+      },
     });
   } catch (error) {
     await connection.rollback();
@@ -123,6 +122,7 @@ export const convertCrypto = async (req, res) => {
     res.status(500).json({ success: false, message: "Internal server error" });
   }
 };
+
 export const getConvertHistory = async (req, res) => {
   try {
     const { user_id } = req.params;

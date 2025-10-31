@@ -85,9 +85,9 @@ const getUsers = async(req, res) => {
 const updateUser = async (req, res) => {
   try {
     const { user_id } = req.params;
-    const { username, fullname, currency, phone } = req.body;
+    const { username, fullname, currency, phone, country, timezone } = req.body;
     // ✅ Check if user exists
-    const userExistsQuery = "SELECT * FROM users WHERE user_id = ?";
+    const userExistsQuery = "SELECT * FROM users WHERE id = ?";
     const [existingUser] = await db.query(userExistsQuery, [user_id]);
     if (existingUser.length === 0) {
       return res.status(404).json({ message: "User not found" });
@@ -113,6 +113,14 @@ const updateUser = async (req, res) => {
       fields.push("phone = ?");
       values.push(phone);
     }
+     if (country !== undefined) {
+      fields.push("country = ?");
+      values.push(country);
+    }
+     if (timezone !== undefined) {
+      fields.push("timezone = ?");
+      values.push(timezone);
+    }
 
     // ✅ If no fields to update
     if (fields.length === 0) {
@@ -123,11 +131,11 @@ const updateUser = async (req, res) => {
     values.push(user_id);
 
     // ✅ Build query dynamically
-    const updateQuery = `UPDATE users SET ${fields.join(", ")} WHERE user_id = ?`;
+    const updateQuery = `UPDATE users SET ${fields.join(", ")} WHERE id = ?`;
     await db.query(updateQuery, values);
 
     // ✅ Fetch and return updated record
-    const [updatedUser] = await db.query("SELECT * FROM users WHERE user_id = ?", [user_id]);
+    const [updatedUser] = await db.query("SELECT * FROM users WHERE id = ?", [user_id]);
 
     res.status(200).json({
       success: true,

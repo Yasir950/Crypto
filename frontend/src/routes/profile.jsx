@@ -4,12 +4,15 @@ import { toast } from "react-toastify";
 
 export function UserProfileComp() {
   const user = JSON.parse(localStorage.getItem("user")) || {};
+  console.log(user);
   // Initial user info
   const [userInfo, setUserInfo] = useState({
-    user_name: user.user_name || "",
-    full_name: user.full_name || "",
+    user_name: user.username || "",
+    full_name: user.fullname || "",
     currency: user.currency || "",
     phone: user.phone || "",
+    country: user.country || "",
+    timezone: user.timezone || "",
   });
 
   // Track which field is currently being edited
@@ -23,10 +26,7 @@ export function UserProfileComp() {
 
   const handleSave = async (field) => {
     setUserInfo((prev) => ({ ...prev, [field]: tempValue }));
-    const res = await updateUser(
-      { ...userInfo, [field]: tempValue },
-      user.user_id
-    );
+    const res = await updateUser({ ...userInfo, [field]: tempValue }, user.id);
     if (res.user) {
       toast.success("Profile updated successfully");
       localStorage.setItem("user", JSON.stringify(res.user));
@@ -43,6 +43,8 @@ export function UserProfileComp() {
     { label: "Full Name", key: "full_name" },
     { label: "Currency", key: "currency" },
     { label: "Phone", key: "phone" },
+    { label: "Country", key: "country" },
+    { label: "Time Zone", key: "timezone" },
   ];
 
   return (
@@ -53,11 +55,9 @@ export function UserProfileComp() {
         <div className="space-y-8">
           {/* Account Information */}
           <div className="p-4 sm:p-6 flex flex-col md:flex-row gap-4">
-            <img
-              src="/purify-logo.png"
-              alt="Logo"
-              className="w-20 h-20 rounded-full object-contain border mx-auto md:mx-0"
-            />
+            <div className="w-16 h-16 rounded-full border-2 border-gray-500 flex items-center justify-center bg-gray-700 text-white text-lg font-semibold">
+              {user?.fullname?.charAt(0)?.toUpperCase() || "U"}
+            </div>
 
             <div className="space-y-4 text-sm sm:text-base w-full md:w-[600px]">
               <div className="flex items-center space-x-6 mb-4">
@@ -127,18 +127,6 @@ export function UserProfileComp() {
                 </div>
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between w-full sm:w-auto">
                   <span className="text-green-600 font-semibold">Verified</span>
-                  <button className="mt-2 sm:mt-0 ml-0 sm:ml-4 border border-gray-300 rounded-2xl px-3 py-1 text-sm hover:bg-gray-50">
-                    View details
-                  </button>
-                </div>
-              </div>
-
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between">
-                <div className="text-gray-700 font-medium w-full sm:w-40">
-                  Country/Region
-                </div>
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between w-full sm:w-auto">
-                  <span className="text-gray-500">Turkey</span>
                   <button className="mt-2 sm:mt-0 ml-0 sm:ml-4 border border-gray-300 rounded-2xl px-3 py-1 text-sm hover:bg-gray-50">
                     View details
                   </button>

@@ -83,9 +83,7 @@ export const saveDeposit = async (req, res) => {
     res.status(201).json({
       success: true,
       message: "Deposit and account balance saved successfully",
-      depositId: depositResult.insertId,
-      accountId,
-    });
+      depositId: depositResult.insertId    });
   } catch (error) {
     handleMysqlError(error, res);
   }
